@@ -18,8 +18,8 @@ contract TX is ERC20 {
     using SafeMath for uint;
     using Address for address;
     
-    address routerAddr =  0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
-    address rewardToken = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
+    address routerAddr = 0x10ED43C718714eb63d5aA57B78B54704E256024E;  // polygon 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
+    address rewardToken = 0xbA2aE424d960c26247Dd6c32edC70B295c744C43; //polygon dai 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
     address marketingWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
     
     IUniswapV2Pair public pair;
@@ -28,8 +28,8 @@ contract TX is ERC20 {
     uint internal maxTxAmount = totalSupply().mul(5) / 100; //5 percent of the supply (Anti Whale Measures)
     bool antiWhaleEnabled;
     
-	uint internal minTokensBeforeSwap = 20000; // 2 billion (no decimal adjustment)
-    uint internal minTokensForRewards = 20000; // in tokens (no decimal adjustment)
+	uint internal minTokensBeforeSwap = 2000; // 2 billion (no decimal adjustment)
+    uint internal minTokensForRewards = 2000; // in tokens (no decimal adjustment)
  
     uint internal buyFee = 17; // percent fee for buying, goes towards rewards
     uint internal sellFee = 20; // percent fee for selling, goes towards rewards
@@ -44,7 +44,7 @@ contract TX is ERC20 {
 	mapping (address => bool) public excludedFromFees;
 	
 
-	uint private _swapPeriod = 60 * 60;
+	uint private _swapPeriod = 60;
     uint private swapTime = block.timestamp + _swapPeriod;
     
 	mapping (address => bool) public whitelisted;
@@ -54,7 +54,7 @@ contract TX is ERC20 {
 
     
 
-    uint withdrawnDividendTimePeriod = 60 * 60 * 24;
+    uint withdrawnDividendTimePeriod = 60;
     
     uint withdrawnDividendTime = block.timestamp + withdrawnDividendTimePeriod;
     
@@ -146,13 +146,17 @@ contract TX is ERC20 {
     
     event SwapLog(uint daibalance);
     function _swap() public swapLock {
-        address DAI = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
+        address Doge = 0xbA2aE424d960c26247Dd6c32edC70B295c744C43;
        // uint tokensToSwap = _balances[address(this)];
-        uint tokensToSwap = IERC20(DAI).balanceOf(address(this));
-        IERC20(DAI).approve(address(router), tokensToSwap);
+        uint tokensToSwap = IERC20(Doge).balanceOf(address(this));
+        IERC20(Doge).approve(address(router), tokensToSwap);
+        
+        if(tokensToSwap <  totalSupply().mul(1) / 1000) {
+            return ;
+        }
         emit SwapLog(tokensToSwap);
 		address[] memory bnbPath = new address[](2);
-		bnbPath[0] = DAI;
+		bnbPath[0] = Doge;
 		bnbPath[1] = router.WETH();
         
         // make the swap
