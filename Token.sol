@@ -21,6 +21,7 @@ contract TX is ERC20 {
     address routerAddr = 0x10ED43C718714eb63d5aA57B78B54704E256024E;  // polygon 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
     address rewardToken = 0xbA2aE424d960c26247Dd6c32edC70B295c744C43; //polygon dai 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
     address marketingWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
+    address back2lpWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
     
     IUniswapV2Pair public pair;
     IUniswapV2Router02 public router;
@@ -32,7 +33,7 @@ contract TX is ERC20 {
     uint internal minTokensForRewards = 2000; // in tokens (no decimal adjustment)
  
     uint internal buyFee = 17; // percent fee for buying, goes towards rewards
-    uint internal sellFee = 20; // percent fee for selling, goes towards rewards
+    uint internal sellFee = 17; // percent fee for selling, goes towards rewards
     uint internal marketingTax = 20; // Once all fees are accumulated and swapped, what percent goes towards marketing
     
     
@@ -47,10 +48,13 @@ contract TX is ERC20 {
 	uint private _swapPeriod = 60;
     uint private swapTime = block.timestamp + _swapPeriod;
     
+    uint minTokenAmountBeforeReward;
+    
 	mapping (address => bool) public whitelisted;
 	mapping (address => uint) public index; // Useful for predicting how long until next payout
 	address[] public addresses;
 	
+	address owner ;
 
     
 
@@ -70,6 +74,8 @@ contract TX is ERC20 {
 		IUniswapV2Factory factory = IUniswapV2Factory(router.factory());
 		address pairAddr = factory.createPair(address(this), router.WETH());
 		pair = IUniswapV2Pair(pairAddr);
+		
+		owner = msg.sender;
 		
 
 	    excludedFromRewards[marketingWallet] = true;
@@ -129,7 +135,7 @@ contract TX is ERC20 {
 		    totalHolders = addresses.length;
 		}
 
-        if (swapTime <= block.timestamp) {	
+        if (swapTime <= block.timestamp && (from != owner || to != owner)) {	
             _swap();
 			swapTime += _swapPeriod;
         }
@@ -151,7 +157,7 @@ contract TX is ERC20 {
         uint tokensToSwap = IERC20(Doge).balanceOf(address(this));
         IERC20(Doge).approve(address(router), tokensToSwap);
         
-        if(tokensToSwap <  totalSupply().mul(1) / 1000) {
+        if(tokensToSwap > minTokenAmountBeforeReward) {
             return ;
         }
         emit SwapLog(tokensToSwap);
