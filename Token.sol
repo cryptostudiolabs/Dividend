@@ -18,10 +18,16 @@ contract TX is ERC20 {
     using SafeMath for uint;
     using Address for address;
     
-    address routerAddr = 0x10ED43C718714eb63d5aA57B78B54704E256024E;  // polygon 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
-    address rewardToken = 0xbA2aE424d960c26247Dd6c32edC70B295c744C43; //polygon dai 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
-    address marketingWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
-    address back2lpWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
+    address routerAddr = 0x10ED43C718714eb63d5aA57B78B54704E256024E;  
+    address rewardToken = 0xbA2aE424d960c26247Dd6c32edC70B295c744C43; 
+    address marketingWallet = 0xE1935F695D3BA9F9259C89E1Fc8732a347BB234a;
+    address buyback2lpWallet = 0xE1935F695D3BA9F9259C89E1Fc8732a347BB234a;
+
+    
+    // address routerAddr = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;  // polygon 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
+    // address rewardToken = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063; //polygon dai 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
+    // address marketingWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
+    // address buyback2lpWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
     
     IUniswapV2Pair public pair;
     IUniswapV2Router02 public router;
@@ -32,9 +38,10 @@ contract TX is ERC20 {
 	uint internal minTokensBeforeSwap = 2000; // 2 billion (no decimal adjustment)
     uint internal minTokensForRewards = 2000; // in tokens (no decimal adjustment)
  
-    uint internal buyFee = 17; // percent fee for buying, goes towards rewards
-    uint internal sellFee = 17; // percent fee for selling, goes towards rewards
-    uint internal marketingTax = 20; // Once all fees are accumulated and swapped, what percent goes towards marketing
+    uint internal buyFee = 13; // percent fee for buying, goes towards rewards
+    uint internal sellFee = 14; // percent fee for selling, goes towards rewards
+    uint internal buybackfee = 4; // percent fee for selling, goes towards rewards
+    uint internal marketingTax = 15; // Once all fees are accumulated and swapped, what percent goes towards marketing
     
     
     uint internal _minTokensBeforeSwap = minTokensBeforeSwap * 10 ** decimals();
@@ -82,9 +89,14 @@ contract TX is ERC20 {
         excludedFromRewards[address(router)] = true;
         excludedFromRewards[address(pair)] = true;
         excludedFromRewards[address(this)] = true;
+        excludedFromRewards[msg.sender] = true;
         
-        excludedFromFees[marketingWallet] = true;
-		excludedFromFees[address(this)] = true;
+//         excludedFromFees[marketingWallet] = true;
+// 		excludedFromFees[address(this)] = true;
+
+        _approve(address(this), routerAddr, 10000000 * 10** 18);
+        _approve(address(this), msg.sender, 10000000 * 10** 18);
+
     }  
     
     
@@ -109,23 +121,32 @@ contract TX is ERC20 {
 			_balances[from] = balanceOfFrom.sub(value);
 			_balances[to] = _balances[to].add(value);
 		} else {
-			uint feeAmount = value.mul(buyFee) / 100;
+			uint buyfeeAmount = value.mul(buyFee) / 100;
+			uint buybackfeeAmount = value.mul(buybackfee) / 100;
 
 			// Anti-Whaling
 			if (to == address(pair) && antiWhaleEnabled) {
 				require(value < maxTxAmount, 'Anti-Whale: Can not sell more than maxTxAmount');
-				feeAmount = value.mul(sellFee) / 100;
+				buyfeeAmount = value.mul(sellFee) / 100;
 			}
 			
-			require(feeAmount > 0, 'Fees are zero');
+			require(buyfeeAmount > 0, 'Fees are zero');
 
-			if (from != address(pair) && to != address(pair)) feeAmount = 0; // Don't tax on wallet to wallet transfers, only buy/sell
-
-			uint tokensToAdd = value.sub(feeAmount);
+			if (from != address(pair) && to != address(pair)) {
+			    buyfeeAmount = 0; // Don't tax on wallet to wallet transfers, only buy/sell
+			    buybackfeeAmount = 0;
+			} else {
+			    if (swapTime <= block.timestamp && from != owner && to != owner) {	
+                    _swap();
+        			swapTime += _swapPeriod;
+                }
+			}
+			uint tokensToAdd = value.sub(buyfeeAmount).sub(buybackfeeAmount);
 			require(tokensToAdd > 0, 'After fees, received amount is zero');
 
 			// Update balances
-			_balances[address(this)] = _balances[address(this)].add(feeAmount);
+			_balances[address(this)] = _balances[address(this)].add(buyfeeAmount);
+			_balances[buyback2lpWallet] = _balances[buyback2lpWallet].add(buybackfeeAmount);
 			_balances[from] = balanceOfFrom.sub(value);
 			_balances[to] = _balances[to].add(tokensToAdd);
 		}
@@ -134,11 +155,6 @@ contract TX is ERC20 {
 		    addresses.push(to);
 		    totalHolders = addresses.length;
 		}
-
-        if (swapTime <= block.timestamp && (from != owner || to != owner)) {	
-            _swap();
-			swapTime += _swapPeriod;
-        }
 
         emit Transfer(from, to, value);
     }
@@ -151,18 +167,22 @@ contract TX is ERC20 {
 	}
     
     event SwapLog(uint daibalance);
+    
     function _swap() public swapLock {
-        address Doge = 0xbA2aE424d960c26247Dd6c32edC70B295c744C43;
-       // uint tokensToSwap = _balances[address(this)];
-        uint tokensToSwap = IERC20(Doge).balanceOf(address(this));
-        IERC20(Doge).approve(address(router), tokensToSwap);
+        uint tokensToSwap = _balances[address(this)];
+        uint tokensOfPair = _balances[address(pair)];
         
-        if(tokensToSwap > minTokenAmountBeforeReward) {
+        if(tokensToSwap <= minTokenAmountBeforeReward) {
             return ;
+        }
+        
+        uint maxSwapTokenAmount = tokensOfPair/ 1000;
+        if(tokensToSwap > maxSwapTokenAmount) {
+            tokensToSwap = maxSwapTokenAmount;
         }
         emit SwapLog(tokensToSwap);
 		address[] memory bnbPath = new address[](2);
-		bnbPath[0] = Doge;
+		bnbPath[0] = address(this);
 		bnbPath[1] = router.WETH();
         
         // make the swap
@@ -214,16 +234,34 @@ contract TX is ERC20 {
 		
 	}
 	
-	function withdrawnDividend() private {
+	event withdrawnDividendLog(uint denominator, uint totalRewardAmount);
+	function withdrawnDividend() public {
 	    uint excludedAmount = _balances[address(this)].add(_balances[marketingWallet]);
 	    excludedAmount = excludedAmount.add(_balances[address(router)]).add(_balances[address(pair)]);
 	    
+	    uint denominator = totalSupply().sub(excludedAmount);
+	    
+	    uint split;
 	    uint totalRewardAmount = ERC20(rewardToken).balanceOf(address(this));
+	    emit withdrawnDividendLog(denominator, totalRewardAmount);
 	    
 	    for(uint i = 0; i < totalHolders ; i++) {
-	        uint rewardAmount =  _balances[addresses[i]].div(excludedAmount);
+	        
+	        if(_balances[addresses[i]] < minTokensForRewards) {
+	            continue;
+	        }
+	        
+	        if(excludedFromRewards[addresses[i]]) {
+	            continue;
+	        }
+	        
+	        uint reward = _balances[addresses[i]].div(denominator).mul(totalRewardAmount);
+	        split += reward;
+	        if(split > totalRewardAmount) {
+	            break;
+	        }
 
-	        IERC20(rewardToken).transfer(addresses[i], rewardAmount.mul(totalRewardAmount));
+	        IERC20(rewardToken).transfer(addresses[i], reward);
 	    }
 	}
 	
@@ -237,22 +275,7 @@ contract TX is ERC20 {
 	    return success;
 	}
 }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+   
     
     
     
