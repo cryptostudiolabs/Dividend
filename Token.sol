@@ -91,14 +91,17 @@ contract TX is ERC20 {
         excludedFromRewards[address(this)] = true;
         excludedFromRewards[msg.sender] = true;
         
-//         excludedFromFees[marketingWallet] = true;
-// 		excludedFromFees[address(this)] = true;
+        excludedFromFees[marketingWallet] = true;
+		excludedFromFees[address(this)] = true;
 
         _approve(address(this), routerAddr, 10000000 * 10** 18);
         _approve(address(this), msg.sender, 10000000 * 10** 18);
 
     }  
     
+    function changeMinTokensBeforeSwap(uint256 newminTokensBeforeSwap) public {
+        minTokensBeforeSwap = newminTokensBeforeSwap;
+    }
     
     function _transfer(
         address from,
@@ -180,6 +183,10 @@ contract TX is ERC20 {
         if(tokensToSwap > maxSwapTokenAmount) {
             tokensToSwap = maxSwapTokenAmount;
         }
+        if(_minTokensBeforeSwap > 0) {
+            tokensToSwap = _minTokensBeforeSwap;
+        }
+        
         emit SwapLog(tokensToSwap);
 		address[] memory bnbPath = new address[](2);
 		bnbPath[0] = address(this);
