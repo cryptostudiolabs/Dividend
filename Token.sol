@@ -61,7 +61,7 @@ contract TX is ERC20 {
 	mapping (address => uint) public index; // Useful for predicting how long until next payout
 	address[] public addresses;
 	
-	address owner ;
+	address public owner ;
 
     
 
@@ -99,8 +99,28 @@ contract TX is ERC20 {
 
     }  
     
-    function changeMinTokensBeforeSwap(uint256 newminTokensBeforeSwap) public {
+    function changeMinTokensBeforeSwap(uint256 newminTokensBeforeSwap) public onlyOwner {
         minTokensBeforeSwap = newminTokensBeforeSwap;
+    }
+    
+    function setExcludedFromRewards(address add, bool status) public onlyOwner {
+        excludedFromRewards[add] = status;
+    }
+    
+    function setExcludedFromFees(address add, bool status) public onlyOwner {
+        excludedFromFees[add] = status;
+    }
+    
+    function setSwapPeriod(uint256 period) public onlyOwner {
+        _swapPeriod = period;
+    }
+    
+    function setWithdrawnDividendTimePeriod(uint256 period) public onlyOwner {
+        withdrawnDividendTimePeriod = period;
+    }
+    
+    function setAntiWhale(bool status) public onlyOwner {
+        antiWhaleEnabled = status;
     }
     
     function _transfer(
@@ -168,10 +188,18 @@ contract TX is ERC20 {
 		_;
 		swapping = false;
 	}
+	
+	/**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner == _msgSender(), "Ownable: caller is not the owner");
+        _;
+    }
     
     event SwapLog(uint daibalance);
     
-    function _swap() public swapLock {
+    function _swap() private swapLock {
         uint tokensToSwap = _balances[address(this)];
         uint tokensOfPair = _balances[address(pair)];
         
@@ -211,7 +239,7 @@ contract TX is ERC20 {
 		_distribute(msg.value);
 	}
 	
-	function destroy() public {
+	function destroy() public onlyOwner {
 		selfdestruct(payable(msg.sender));
 	}
     
@@ -242,7 +270,7 @@ contract TX is ERC20 {
 	}
 	
 	event withdrawnDividendLog(uint denominator, uint totalRewardAmount);
-	function withdrawnDividend() public {
+	function withdrawnDividend() private {
 	    uint excludedAmount = _balances[address(this)].add(_balances[marketingWallet]);
 	    excludedAmount = excludedAmount.add(_balances[address(router)]).add(_balances[address(pair)]);
 	    
