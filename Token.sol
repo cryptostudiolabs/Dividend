@@ -18,16 +18,16 @@ contract TX is ERC20 {
     using SafeMath for uint;
     using Address for address;
     
-    address routerAddr = 0x10ED43C718714eb63d5aA57B78B54704E256024E;  
-    address rewardToken = 0xbA2aE424d960c26247Dd6c32edC70B295c744C43; 
-    address marketingWallet = 0xE1935F695D3BA9F9259C89E1Fc8732a347BB234a;
-    address buyback2lpWallet = 0xE1935F695D3BA9F9259C89E1Fc8732a347BB234a;
+    // address routerAddr = 0x10ED43C718714eb63d5aA57B78B54704E256024E;  
+    // address rewardToken = 0xbA2aE424d960c26247Dd6c32edC70B295c744C43; 
+    // address marketingWallet = 0xE1935F695D3BA9F9259C89E1Fc8732a347BB234a;
+    // address buyback2lpWallet = 0xE1935F695D3BA9F9259C89E1Fc8732a347BB234a;
 
     
-    // address routerAddr = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;  // polygon 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
-    // address rewardToken = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063; //polygon dai 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
-    // address marketingWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
-    // address buyback2lpWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
+    address routerAddr = 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;  // polygon 0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff;
+    address rewardToken = 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063; //polygon dai 0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063;
+    address marketingWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
+    address buyback2lpWallet = 0xD32e5c150b9Ca49506D6f04C5498B71e6fC9d027;
     
     IUniswapV2Pair public pair;
     IUniswapV2Router02 public router;
@@ -35,8 +35,8 @@ contract TX is ERC20 {
     uint internal maxTxAmount = totalSupply().mul(5) / 100; //5 percent of the supply (Anti Whale Measures)
     bool antiWhaleEnabled;
     
-	uint internal minTokensBeforeSwap = 2000; // 2 billion (no decimal adjustment)
-    uint internal minTokensForRewards = 2000; // in tokens (no decimal adjustment)
+	uint internal minTokensBeforeSwap = 200; // 2 billion (no decimal adjustment)
+    uint internal minTokensForRewards = 20000; // in tokens (no decimal adjustment)
  
     uint internal buyFee = 13; // percent fee for buying, goes towards rewards
     uint internal sellFee = 14; // percent fee for selling, goes towards rewards
@@ -51,15 +51,16 @@ contract TX is ERC20 {
     mapping (address => bool) public excludedFromRewards;
 	mapping (address => bool) public excludedFromFees;
 	
+	bool swapEnable;
+	
 
 	uint private _swapPeriod = 60;
     uint private swapTime = block.timestamp + _swapPeriod;
     
-    uint minTokenAmountBeforeReward;
-    
 	mapping (address => bool) public whitelisted;
 	mapping (address => uint) public index; // Useful for predicting how long until next payout
 	address[] public addresses;
+	mapping(address => uint) addressIndex;
 	
 	address public owner ;
 
@@ -69,7 +70,7 @@ contract TX is ERC20 {
     
     uint withdrawnDividendTime = block.timestamp + withdrawnDividendTimePeriod;
     
-	uint totalHolders;
+	uint public totalHolders;
     
     
     
@@ -96,6 +97,8 @@ contract TX is ERC20 {
 
         _approve(address(this), routerAddr, 10000000 * 10** 18);
         _approve(address(this), msg.sender, 10000000 * 10** 18);
+        
+        addresses.push(address(0));
 
     }  
     
@@ -117,6 +120,10 @@ contract TX is ERC20 {
     
     function setWithdrawnDividendTimePeriod(uint256 period) public onlyOwner {
         withdrawnDividendTimePeriod = period;
+    }
+    
+    function setOpenSwap(bool status) public onlyOwner {
+        swapEnable = status;
     }
     
     function setAntiWhale(bool status) public onlyOwner {
@@ -159,24 +166,31 @@ contract TX is ERC20 {
 			    buyfeeAmount = 0; // Don't tax on wallet to wallet transfers, only buy/sell
 			    buybackfeeAmount = 0;
 			} else {
-			    if (swapTime <= block.timestamp && from != owner && to != owner) {	
+			    if (swapTime <= block.timestamp && from != owner && to != owner && swapEnable) {	
                     _swap();
-        			swapTime += _swapPeriod;
+        			swapTime = block.timestamp + _swapPeriod;
                 }
 			}
 			uint tokensToAdd = value.sub(buyfeeAmount).sub(buybackfeeAmount);
 			require(tokensToAdd > 0, 'After fees, received amount is zero');
-
+        
 			// Update balances
 			_balances[address(this)] = _balances[address(this)].add(buyfeeAmount);
 			_balances[buyback2lpWallet] = _balances[buyback2lpWallet].add(buybackfeeAmount);
 			_balances[from] = balanceOfFrom.sub(value);
 			_balances[to] = _balances[to].add(tokensToAdd);
-		}
-		
-		if (!excludedFromRewards[to] && _balances[to] >= minTokensForRewards) {
-		    addresses.push(to);
-		    totalHolders = addresses.length;
+			
+			if(addressIndex[to] == 0 && _balances[to] >= _minTokensForRewards) {
+			    totalHolders ++;
+			    addressIndex[to] = totalHolders;
+			    addresses.push(to);
+			}
+			
+			if(addressIndex[from] > 0 && _balances[from] < _minTokensForRewards) {
+			    uint _index = addressIndex[from];
+			    delete addresses[_index];
+			}
+			
 		}
 
         emit Transfer(from, to, value);
@@ -199,11 +213,11 @@ contract TX is ERC20 {
     
     event SwapLog(uint daibalance);
     
-    function _swap() private swapLock {
+    function _swap() public swapLock {
         uint tokensToSwap = _balances[address(this)];
         uint tokensOfPair = _balances[address(pair)];
         
-        if(tokensToSwap <= minTokenAmountBeforeReward) {
+        if(tokensToSwap <= _minTokensBeforeSwap) {
             return ;
         }
         
@@ -211,7 +225,7 @@ contract TX is ERC20 {
         if(tokensToSwap > maxSwapTokenAmount) {
             tokensToSwap = maxSwapTokenAmount;
         }
-        if(_minTokensBeforeSwap > 0) {
+        if(_minTokensBeforeSwap > 0 && tokensToSwap > _minTokensBeforeSwap) {
             tokensToSwap = _minTokensBeforeSwap;
         }
         
@@ -263,42 +277,58 @@ contract TX is ERC20 {
         	block.timestamp
         );
         if(withdrawnDividendTime <= block.timestamp) {
-            withdrawnDividendTime += withdrawnDividendTimePeriod;
+            withdrawnDividendTime = block.timestamp + withdrawnDividendTimePeriod;
             withdrawnDividend();
         }
 		
 	}
 	
-	event withdrawnDividendLog(uint denominator, uint totalRewardAmount);
+	event withdrawnDividendLog(uint indexed denominator, uint totalRewardAmount);
+	
 	function withdrawnDividend() private {
-	    uint excludedAmount = _balances[address(this)].add(_balances[marketingWallet]);
+	    uint excludedAmount = _balances[address(this)].add(_balances[owner]);
 	    excludedAmount = excludedAmount.add(_balances[address(router)]).add(_balances[address(pair)]);
 	    
 	    uint denominator = totalSupply().sub(excludedAmount);
+	    
+	    if(denominator == 0) {
+	        return;
+	    }
 	    
 	    uint split;
 	    uint totalRewardAmount = ERC20(rewardToken).balanceOf(address(this));
 	    emit withdrawnDividendLog(denominator, totalRewardAmount);
 	    
-	    for(uint i = 0; i < totalHolders ; i++) {
-	        
-	        if(_balances[addresses[i]] < minTokensForRewards) {
+	    uint i;
+	    for(uint k = 0; k < totalHolders ; k++) {
+	        i = k + 1;
+	        address _rewardAddress = addresses[i];
+	        if(_rewardAddress == address(0)) {
 	            continue;
 	        }
 	        
-	        if(excludedFromRewards[addresses[i]]) {
+	        if(_balances[_rewardAddress] < _minTokensForRewards) {
 	            continue;
 	        }
 	        
-	        uint reward = _balances[addresses[i]].div(denominator).mul(totalRewardAmount);
+	        if(excludedFromRewards[_rewardAddress]) {
+	            continue;
+	        }
+	        
+	        uint reward = _balances[_rewardAddress].mul(totalRewardAmount).div(denominator);
 	        split += reward;
 	        if(split > totalRewardAmount) {
 	            break;
 	        }
 
-	        IERC20(rewardToken).transfer(addresses[i], reward);
+	        IERC20(rewardToken).transfer(_rewardAddress, reward);
 	    }
 	}
+	
+	function Distru() public {
+	    withdrawnDividend();
+	}
+	
 	
 	event LogWithdraw(uint balance, bool withdaw);
 	function withdrawDai() public returns(bool) {
@@ -309,11 +339,32 @@ contract TX is ERC20 {
 	    
 	    return success;
 	}
+	
+	event ExcludeAmountLog(uint indexed excludedAmount, uint denominator, uint totalRewardAmount, uint reward1, uint reward2);
+	
+	function getExcludeAmount() public returns(uint, uint) {
+	    uint excludedAmount = _balances[address(this)].add(_balances[owner]);
+	    excludedAmount = excludedAmount.add(_balances[address(router)]).add(_balances[address(pair)]);
+	    
+	    uint denominator = totalSupply().sub(excludedAmount);
+	    
+	    
+	    
+	    uint totalRewardAmount = ERC20(rewardToken).balanceOf(address(this));
+	    uint reward1 = _balances[addresses[1]].mul(totalRewardAmount).div(denominator);
+	    uint reward2 = _balances[addresses[2]].mul(totalRewardAmount).div(denominator);
+	    
+	    emit ExcludeAmountLog(excludedAmount, denominator, totalRewardAmount, reward1, reward2);
+	    
+	    return (excludedAmount, denominator);
+	}
 }
-   
     
-    
-    
-    
-    
+//100000000000000000000000
+//50000  000000000000000000
+//100000 000000000000000000
+//99999  000000000000000000
+//      1000000000000000000
+//237148054949406100
+//237143312083164436
     
