@@ -1,7 +1,3 @@
-/**
- *Submitted for verification at BscScan.com on 2021-08-29
-*/
-
 // SPDX-License-Identifier: MIT
 
 pragma solidity ^0.6.2;
@@ -12,7 +8,7 @@ abstract contract Context {
         return msg.sender;
     }
 
-    function _msgData() internal view virtual returns (bytes calldata) {
+    function _msgData() internal view virtual returns (bytes memory) {
         this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
         return msg.data;
     }
@@ -552,7 +548,7 @@ contract DividendPayingToken is ERC20, Ownable, DividendPayingTokenInterface, Di
   using SafeMathUint for uint256;
   using SafeMathInt for int256;
 
-  address public immutable DOGE = address(0xbA2aE424d960c26247Dd6c32edC70B295c744C43); //DOGE
+  address public DOGE = address(0xbA2aE424d960c26247Dd6c32edC70B295c744C43); //DOGE
 
 
   // With `magnitude`, we can properly distribute dividends even if the amount of received ether is small.
@@ -1246,7 +1242,7 @@ contract BabyDogePaid is ERC20, Ownable {
 
     address public deadWallet = 0x000000000000000000000000000000000000dEaD;
 
-    address public immutable DOGE = address(0xbA2aE424d960c26247Dd6c32edC70B295c744C43); //DOGE
+    address public DOGE = address(0xbA2aE424d960c26247Dd6c32edC70B295c744C43); //DOGE
 
     uint256 public swapTokensAtAmount = 200000 * (10**9);
     
@@ -1293,25 +1289,25 @@ contract BabyDogePaid is ERC20, Ownable {
     );
 
     event SendDividends(
-    	uint256 tokensSwapped,
-    	uint256 amount
+        uint256 tokensSwapped,
+        uint256 amount
     );
 
     event ProcessedDividendTracker(
-    	uint256 iterations,
-    	uint256 claims,
+        uint256 iterations,
+        uint256 claims,
         uint256 lastProcessedIndex,
-    	bool indexed automatic,
-    	uint256 gas,
-    	address indexed processor
+        bool indexed automatic,
+        uint256 gas,
+        address indexed processor
     );
 
     constructor() public ERC20("BabyDogePaid", "BDogePaid") {
 
-    	dividendTracker = new BabyDogePaidDividendTracker();
+        dividendTracker = new BabyDogePaidDividendTracker();
 
 
-    	IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
          // Create a uniswap pair for this new token
         address _uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
@@ -1342,7 +1338,7 @@ contract BabyDogePaid is ERC20, Ownable {
 
     receive() external payable {
 
-  	}
+    }
 
     function updateDividendTracker(address newAddress) public onlyOwner {
         require(newAddress != address(dividendTracker), "BabyDogePaid: The dividend tracker already has that address");
@@ -1377,7 +1373,7 @@ contract BabyDogePaid is ERC20, Ownable {
         emit ExcludeFromFees(account, excluded);
     }
 
-    function excludeMultipleAccountsFromFees(address[] calldata accounts, bool excluded) public onlyOwner {
+    function excludeMultipleAccountsFromFees(address[] memory accounts, bool excluded) public onlyOwner {
         for(uint256 i = 0; i < accounts.length; i++) {
             _isExcludedFromFees[accounts[i]] = excluded;
         }
@@ -1404,9 +1400,9 @@ contract BabyDogePaid is ERC20, Ownable {
         totalFees = DOGERewardsFee.add(liquidityFee).add(marketingFee);
 
     }
-	function setSellTransactionMultiplier(uint256 _multiplier) external onlyOwner {
-  	    sellFeeIncreaseFactor = _multiplier;
-  	}
+    function setSellTransactionMultiplier(uint256 _multiplier) external onlyOwner {
+        sellFeeIncreaseFactor = _multiplier;
+    }
 
     function setAutomatedMarketMakerPair(address pair, bool value) public onlyOwner {
         require(pair != uniswapV2Pair, "BabyDogePaid: The PancakeSwap pair cannot be removed from automatedMarketMakerPairs");
@@ -1455,16 +1451,16 @@ contract BabyDogePaid is ERC20, Ownable {
     }
 
     function withdrawableDividendOf(address account) public view returns(uint256) {
-    	return dividendTracker.withdrawableDividendOf(account);
-  	}
+        return dividendTracker.withdrawableDividendOf(account);
+    }
 
-	function dividendTokenBalanceOf(address account) public view returns (uint256) {
-		return dividendTracker.balanceOf(account);
-	}
+    function dividendTokenBalanceOf(address account) public view returns (uint256) {
+        return dividendTracker.balanceOf(account);
+    }
 
-	function excludeFromDividends(address account) external onlyOwner{
-	    dividendTracker.excludeFromDividends(account);
-	}
+    function excludeFromDividends(address account) external onlyOwner{
+        dividendTracker.excludeFromDividends(account);
+    }
 
     function getAccountDividendsInfo(address account)
         external view returns (
@@ -1479,7 +1475,7 @@ contract BabyDogePaid is ERC20, Ownable {
         return dividendTracker.getAccount(account);
     }
 
-	function getAccountDividendsInfoAtIndex(uint256 index)
+    function getAccountDividendsInfoAtIndex(uint256 index)
         external view returns (
             address,
             int256,
@@ -1489,20 +1485,20 @@ contract BabyDogePaid is ERC20, Ownable {
             uint256,
             uint256,
             uint256) {
-    	return dividendTracker.getAccountAtIndex(index);
+        return dividendTracker.getAccountAtIndex(index);
     }
 
-	function processDividendTracker(uint256 gas) external {
-		(uint256 iterations, uint256 claims, uint256 lastProcessedIndex) = dividendTracker.process(gas);
-		emit ProcessedDividendTracker(iterations, claims, lastProcessedIndex, false, gas, tx.origin);
+    function processDividendTracker(uint256 gas) external {
+        (uint256 iterations, uint256 claims, uint256 lastProcessedIndex) = dividendTracker.process(gas);
+        emit ProcessedDividendTracker(iterations, claims, lastProcessedIndex, false, gas, tx.origin);
     }
 
     function claim() external {
-		dividendTracker.processAccount(msg.sender, false);
+        dividendTracker.processAccount(msg.sender, false);
     }
 
     function getLastProcessedIndex() external view returns(uint256) {
-    	return dividendTracker.getLastProcessedIndex();
+        return dividendTracker.getLastProcessedIndex();
     }
 
     function getNumberOfDividendTokenHolders() external view returns(uint256) {
@@ -1524,7 +1520,7 @@ contract BabyDogePaid is ERC20, Ownable {
             return;
         }
 
-		uint256 contractTokenBalance = balanceOf(address(this));
+        uint256 contractTokenBalance = balanceOf(address(this));
 
         bool canSwap = contractTokenBalance >= swapTokensAtAmount;
 
@@ -1537,7 +1533,8 @@ contract BabyDogePaid is ERC20, Ownable {
             swapping = true;
 
             uint256 marketingTokens = contractTokenBalance.mul(marketingFee).div(totalFees);
-            swapAndSendToFee(marketingTokens);
+            //swapAndSendToFee(marketingTokens);
+            super._transfer(address(this), _marketingWalletAddress, marketingTokens);
 
             uint256 swapTokens = contractTokenBalance.mul(liquidityFee).div(totalFees);
             swapAndLiquify(swapTokens);
@@ -1557,11 +1554,11 @@ contract BabyDogePaid is ERC20, Ownable {
         }
 
         if(takeFee) {
-        	uint256 fees = amount.mul(totalFees).div(100);
-        	if(automatedMarketMakerPairs[to]){
-        	   fees = fees.div(100).mul(sellFeeIncreaseFactor);
-        	}
-        	amount = amount.sub(fees);
+            uint256 fees = amount.mul(totalFees).div(100);
+            if(automatedMarketMakerPairs[to]){
+               fees = fees.div(100).mul(sellFeeIncreaseFactor);
+            }
+            amount = amount.sub(fees);
 
             super._transfer(from, address(this), fees);
         }
@@ -1572,14 +1569,14 @@ contract BabyDogePaid is ERC20, Ownable {
         try dividendTracker.setBalance(payable(to), balanceOf(to)) {} catch {}
 
         if(!swapping) {
-	    	uint256 gas = gasForProcessing;
+            uint256 gas = gasForProcessing;
 
-	    	try dividendTracker.process(gas) returns (uint256 iterations, uint256 claims, uint256 lastProcessedIndex) {
-	    		emit ProcessedDividendTracker(iterations, claims, lastProcessedIndex, true, gas, tx.origin);
-	    	}
-	    	catch {
+            try dividendTracker.process(gas) returns (uint256 iterations, uint256 claims, uint256 lastProcessedIndex) {
+                emit ProcessedDividendTracker(iterations, claims, lastProcessedIndex, true, gas, tx.origin);
+            }
+            catch {
 
-	    	}
+            }
         }
     }
 
@@ -1698,7 +1695,7 @@ contract BabyDogePaidDividendTracker is Ownable, DividendPayingToken {
     mapping (address => uint256) public lastClaimTimes;
 
     uint256 public claimWait;
-    uint256 public immutable minimumTokenBalanceForDividends;
+    uint256 public minimumTokenBalanceForDividends;
 
     event ExcludeFromDividends(address indexed account);
     event ClaimWaitUpdated(uint256 indexed newValue, uint256 indexed oldValue);
@@ -1706,7 +1703,7 @@ contract BabyDogePaidDividendTracker is Ownable, DividendPayingToken {
     event Claim(address indexed account, uint256 amount, bool indexed automatic);
 
     constructor() public DividendPayingToken("BabyDogePaid_Dividen_Tracker", "BabyDogePaid_Dividend_Tracker") {
-    	claimWait = 3600;
+        claimWait = 3600;
         minimumTokenBalanceForDividends = 200000 * (10**9); //must hold 200000+ tokens
     }
 
@@ -1719,13 +1716,13 @@ contract BabyDogePaidDividendTracker is Ownable, DividendPayingToken {
     }
 
     function excludeFromDividends(address account) external onlyOwner {
-    	require(!excludedFromDividends[account]);
-    	excludedFromDividends[account] = true;
+        require(!excludedFromDividends[account]);
+        excludedFromDividends[account] = true;
 
-    	_setBalance(account, 0);
-    	tokenHoldersMap.remove(account);
+        _setBalance(account, 0);
+        tokenHoldersMap.remove(account);
 
-    	emit ExcludeFromDividends(account);
+        emit ExcludeFromDividends(account);
     }
 
     function updateClaimWait(uint256 newClaimWait) external onlyOwner {
@@ -1736,7 +1733,7 @@ contract BabyDogePaidDividendTracker is Ownable, DividendPayingToken {
     }
 
     function getLastProcessedIndex() external view returns(uint256) {
-    	return lastProcessedIndex;
+        return lastProcessedIndex;
     }
 
     function getNumberOfTokenHolders() external view returns(uint256) {
@@ -1800,7 +1797,7 @@ contract BabyDogePaidDividendTracker is Ownable, DividendPayingToken {
             uint256,
             uint256,
             uint256) {
-    	if(index >= tokenHoldersMap.size()) {
+        if(index >= tokenHoldersMap.size()) {
             return (0x0000000000000000000000000000000000000000, -1, -1, 0, 0, 0, 0, 0);
         }
 
@@ -1810,86 +1807,86 @@ contract BabyDogePaidDividendTracker is Ownable, DividendPayingToken {
     }
 
     function canAutoClaim(uint256 lastClaimTime) private view returns (bool) {
-    	if(lastClaimTime > block.timestamp)  {
-    		return false;
-    	}
+        if(lastClaimTime > block.timestamp)  {
+            return false;
+        }
 
-    	return block.timestamp.sub(lastClaimTime) >= claimWait;
+        return block.timestamp.sub(lastClaimTime) >= claimWait;
     }
 
     function setBalance(address payable account, uint256 newBalance) external onlyOwner {
-    	if(excludedFromDividends[account]) {
-    		return;
-    	}
+        if(excludedFromDividends[account]) {
+            return;
+        }
 
-    	if(newBalance >= minimumTokenBalanceForDividends) {
+        if(newBalance >= minimumTokenBalanceForDividends) {
             _setBalance(account, newBalance);
-    		tokenHoldersMap.set(account, newBalance);
-    	}
-    	else {
+            tokenHoldersMap.set(account, newBalance);
+        }
+        else {
             _setBalance(account, 0);
-    		tokenHoldersMap.remove(account);
-    	}
+            tokenHoldersMap.remove(account);
+        }
 
-    	processAccount(account, true);
+        processAccount(account, true);
     }
 
     function process(uint256 gas) public returns (uint256, uint256, uint256) {
-    	uint256 numberOfTokenHolders = tokenHoldersMap.keys.length;
+        uint256 numberOfTokenHolders = tokenHoldersMap.keys.length;
 
-    	if(numberOfTokenHolders == 0) {
-    		return (0, 0, lastProcessedIndex);
-    	}
+        if(numberOfTokenHolders == 0) {
+            return (0, 0, lastProcessedIndex);
+        }
 
-    	uint256 _lastProcessedIndex = lastProcessedIndex;
+        uint256 _lastProcessedIndex = lastProcessedIndex;
 
-    	uint256 gasUsed = 0;
+        uint256 gasUsed = 0;
 
-    	uint256 gasLeft = gasleft();
+        uint256 gasLeft = gasleft();
 
-    	uint256 iterations = 0;
-    	uint256 claims = 0;
+        uint256 iterations = 0;
+        uint256 claims = 0;
 
-    	while(gasUsed < gas && iterations < numberOfTokenHolders) {
-    		_lastProcessedIndex++;
+        while(gasUsed < gas && iterations < numberOfTokenHolders) {
+            _lastProcessedIndex++;
 
-    		if(_lastProcessedIndex >= tokenHoldersMap.keys.length) {
-    			_lastProcessedIndex = 0;
-    		}
+            if(_lastProcessedIndex >= tokenHoldersMap.keys.length) {
+                _lastProcessedIndex = 0;
+            }
 
-    		address account = tokenHoldersMap.keys[_lastProcessedIndex];
+            address account = tokenHoldersMap.keys[_lastProcessedIndex];
 
-    		if(canAutoClaim(lastClaimTimes[account])) {
-    			if(processAccount(payable(account), true)) {
-    				claims++;
-    			}
-    		}
+            if(canAutoClaim(lastClaimTimes[account])) {
+                if(processAccount(payable(account), true)) {
+                    claims++;
+                }
+            }
 
-    		iterations++;
+            iterations++;
 
-    		uint256 newGasLeft = gasleft();
+            uint256 newGasLeft = gasleft();
 
-    		if(gasLeft > newGasLeft) {
-    			gasUsed = gasUsed.add(gasLeft.sub(newGasLeft));
-    		}
+            if(gasLeft > newGasLeft) {
+                gasUsed = gasUsed.add(gasLeft.sub(newGasLeft));
+            }
 
-    		gasLeft = newGasLeft;
-    	}
+            gasLeft = newGasLeft;
+        }
 
-    	lastProcessedIndex = _lastProcessedIndex;
+        lastProcessedIndex = _lastProcessedIndex;
 
-    	return (iterations, claims, lastProcessedIndex);
+        return (iterations, claims, lastProcessedIndex);
     }
 
     function processAccount(address payable account, bool automatic) public onlyOwner returns (bool) {
         uint256 amount = _withdrawDividendOfUser(account);
 
-    	if(amount > 0) {
-    		lastClaimTimes[account] = block.timestamp;
+        if(amount > 0) {
+            lastClaimTimes[account] = block.timestamp;
             emit Claim(account, amount, automatic);
-    		return true;
-    	}
+            return true;
+        }
 
-    	return false;
+        return false;
     }
 }

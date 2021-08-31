@@ -611,7 +611,7 @@
 	},
 	"settings": {
 		"compilationTarget": {
-			"A/DividendPayingToken.sol": "DividendPayingToken"
+			"Dividend/A/DividendPayingToken.sol": "DividendPayingToken"
 		},
 		"evmVersion": "istanbul",
 		"libraries": {},
@@ -625,77 +625,77 @@
 		"remappings": []
 	},
 	"sources": {
-		"A/Context.sol": {
+		"Dividend/A/Context.sol": {
 			"keccak256": "0xeb0ab1c556ebd5fc577ac57603be837c0dbf5c5366810fa3c3cca571f306b8a6",
 			"urls": [
 				"bzz-raw://b5b34e7f0bbab9e2feb3541586b5e8d1782aeafeb1466fe1ca6503fbcc8a8e6b",
 				"dweb:/ipfs/QmeznJf3Q1dA91WSFQKsZTeS8S2pf8cKuqc4pBAHXSVAVA"
 			]
 		},
-		"A/DividendPayingToken.sol": {
+		"Dividend/A/DividendPayingToken.sol": {
 			"keccak256": "0x8060d5235d2026e9bd77e6aa4e98c38e284db8050b4cb9763d2515ecfae7bd7f",
 			"urls": [
 				"bzz-raw://3eaeb5f84c6fbb17476cfc8faa313d30eccd30e6937b8cf473647cb9a9bc1773",
 				"dweb:/ipfs/QmbAzS5TLfNC4ve6JgDt5HhCTzAgHGaoWeF44V1nFq4fCp"
 			]
 		},
-		"A/DividendPayingTokenInterface.sol": {
+		"Dividend/A/DividendPayingTokenInterface.sol": {
 			"keccak256": "0x7f89c8a44c517aefb0f32496f3c9aa6d625b26ffd42fb87be1a1f8886e663736",
 			"urls": [
 				"bzz-raw://080802aab9ae1c16d7179224b71f1213e43c94f02cb260e65428d4ee05b00a6e",
 				"dweb:/ipfs/QmQUaCU9aKNdF71HtTdgWn3meZgo9wsHLWqwrTBjMWm5CE"
 			]
 		},
-		"A/DividendPayingTokenOptionalInterface.sol": {
+		"Dividend/A/DividendPayingTokenOptionalInterface.sol": {
 			"keccak256": "0xccd3b1a794677830c3da0892f25d2825abb0a07f2e043a392e94bdf36cde2bee",
 			"urls": [
 				"bzz-raw://ca849b4e1096723775dc2031e075550a2a9f045add9c3f005a55ed55065613aa",
 				"dweb:/ipfs/QmUG8cRKfYPa3cWqVfcgYLrbKAT6Afpi2UEnmhk3yJE11Y"
 			]
 		},
-		"A/ERC20.sol": {
+		"Dividend/A/ERC20.sol": {
 			"keccak256": "0xf77f62b5e8456953d816ef00f8dd0662874ee436fe8071b04f341e3348189e81",
 			"urls": [
 				"bzz-raw://604bb8b839e447aeb36ef845ec52faba63a33f13a29ceb2f176b9dcb430bbf91",
 				"dweb:/ipfs/QmVqGZW11Gc7jAnaAZMTbB7drZ3bCMJXZeb4UDayXzTAHY"
 			]
 		},
-		"A/IERC20.sol": {
+		"Dividend/A/IERC20.sol": {
 			"keccak256": "0x1ad19bc9ceeebdd77d2c54baacd773164b8ca5de840cc8c03b19d5ba44e298dc",
 			"urls": [
 				"bzz-raw://ec4cfccd7f1be43b82305cc48a837c9cd34307143e93eccc011699be5ee69259",
 				"dweb:/ipfs/QmZaCCqXMn1Xqp4NBwLRxagaJdu59yDyJ4yDxLwXMrktCL"
 			]
 		},
-		"A/IERC20Metadata.sol": {
+		"Dividend/A/IERC20Metadata.sol": {
 			"keccak256": "0x07641bd3c961094004f5810cdc5fb229cc009d883edc0c967dcbafaf41eadfd1",
 			"urls": [
 				"bzz-raw://d6f8d9865976ec82ff1e7548f51b3c4ae87eb1c5a72c89a9a908770ece6c7bd7",
 				"dweb:/ipfs/Qmdfzw8Cs5PLiot49Dm4sgn26ozJDE12FCALdJjTgCYSHc"
 			]
 		},
-		"A/Ownable.sol": {
+		"Dividend/A/Ownable.sol": {
 			"keccak256": "0x5c008395815cb841b1b721f9642853f7bbf8f1de6e95178ad5ecebdf726efb2c",
 			"urls": [
 				"bzz-raw://3cf34268d82f3c5925b3f45595beb1ec0f26a255834b5c4eff32d687ee284b64",
 				"dweb:/ipfs/QmdAnfr1jjSh3SdXVmYuFgHHJ3qtNPoB7xaz8N935YSwi1"
 			]
 		},
-		"A/SafeMath.sol": {
+		"Dividend/A/SafeMath.sol": {
 			"keccak256": "0x2d2b3fb16c580f6256dd4a18a5c8a8fe60542b15fd14797d419b0673f484424f",
 			"urls": [
 				"bzz-raw://654aef5c80446e0974b2c3f594c03db846b98e936c3ecf498beaa57de5a4908e",
 				"dweb:/ipfs/QmUPzxiHWFbPgfCCroh1rQr8CtxbsgWRLvRaqe35bExxKy"
 			]
 		},
-		"A/SafeMathInt.sol": {
+		"Dividend/A/SafeMathInt.sol": {
 			"keccak256": "0xac316dce517357ead2869c47de05d48c80c4cb69d5c9671566017e34e742f947",
 			"urls": [
 				"bzz-raw://adf55a82f5c5cca8535cc7059b984b6843045d8a5a726f680b02b92630a18e21",
 				"dweb:/ipfs/QmdEAYwVA3CMKKv5pNqwU85gbVDYCTYC5mXuoeDCNaTvdw"
 			]
 		},
-		"A/SafeMathUint.sol": {
+		"Dividend/A/SafeMathUint.sol": {
 			"keccak256": "0x8f5c24cd76bdcec7af73fb22794aa32e29ce58c0f63b448f7a8b25d44b78975f",
 			"urls": [
 				"bzz-raw://2f36d6348f20e2d713db661f3b22fd9d212c37f18ad9f790312f3c01d1e800aa",

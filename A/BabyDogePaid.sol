@@ -22,7 +22,7 @@ contract BabyDogePaid is ERC20, Ownable {
 
     address public deadWallet = 0x000000000000000000000000000000000000dEaD;
 
-    address public  DOGE = address(0x8f3Cf7ad23Cd3CaDbD9735AFf958023239c6A063); //DOGE
+    address public  DOGE = address(0xbA2aE424d960c26247Dd6c32edC70B295c744C43); //DOGE
 
     uint256 public swapTokensAtAmount = 200000 * (10**9);
     
@@ -87,7 +87,7 @@ contract BabyDogePaid is ERC20, Ownable {
     	dividendTracker = new BabyDogePaidDividendTracker();
 
 
-    	IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff);
+    	IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x10ED43C718714eb63d5aA57B78B54704E256024E);
          // Create a uniswap pair for this new token
         address _uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
